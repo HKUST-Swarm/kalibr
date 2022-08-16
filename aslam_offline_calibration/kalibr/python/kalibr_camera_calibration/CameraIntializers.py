@@ -218,19 +218,19 @@ def calibrateIntrinsics(cam_geometry, obslist, distortionActive=True, intrinsics
     target_pose_dvs=list()
     for obs in obslist: 
         success, T_t_c = cam_geometry.geometry.estimateTransformation(obs)
-        target_pose_dv = addPoseDesignVariable(problem, T_t_c)
-        target_pose_dvs.append(target_pose_dv)
+        if success:
+            target_pose_dv = addPoseDesignVariable(problem, T_t_c)
+            target_pose_dvs.append(target_pose_dv)
+            T_cam_w = target_pose_dv.toExpression().inverse()
         
-        T_cam_w = target_pose_dv.toExpression().inverse()
-    
-        ## add error terms
-        for i in range(0, target.size()):
-            p_target = aopt.HomogeneousExpression(sm.toHomogeneous(target.point(i)));
-            valid, y = obs.imagePoint(i)
-            if valid:
-                rerr = cam_geometry.model.reprojectionError(y, invR, T_cam_w * p_target, cam_geometry.dv)
-                problem.addErrorTerm(rerr)
-                reprojectionErrors.append(rerr)
+            ## add error terms
+            for i in range(0, target.size()):
+                p_target = aopt.HomogeneousExpression(sm.toHomogeneous(target.point(i)));
+                valid, y = obs.imagePoint(i)
+                if valid:
+                    rerr = cam_geometry.model.reprojectionError(y, invR, T_cam_w * p_target, cam_geometry.dv)
+                    problem.addErrorTerm(rerr)
+                    reprojectionErrors.append(rerr)
                                                     
     sm.logDebug("calibrateIntrinsics: added {0} camera error terms".format(len(reprojectionErrors)))
     
@@ -317,7 +317,9 @@ def solveFullBatch(cameras, baseline_guesses, graph):
         obs_tuple = graph.obs_db.getAllObsAtTimestamp(timestamp)
 
         #create a target pose dv for all target views (= T_cam0_w)
-        T0 = graph.getTargetPoseGuess(timestamp, cameras, baseline_guesses)
+        succ, T0 = graph.getTargetPoseGuess(timestamp, cameras, baseline_guesses)
+        if not succ:
+            continue
         target_pose_dv = addPoseDesignVariable(problem, T0)
         target_pose_dvs.append(target_pose_dv)
         

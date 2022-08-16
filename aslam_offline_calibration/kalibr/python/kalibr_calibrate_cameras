@@ -271,7 +271,9 @@ def main():
                 est_baselines = list()
                 for bidx, baseline in enumerate(calibrator.baselines):
                     est_baselines.append( sm.Transformation(baseline.T()) )
-                T_tc_guess = graph.getTargetPoseGuess(timestamp, cameraList, est_baselines)
+                succ, T_tc_guess = graph.getTargetPoseGuess(timestamp, cameraList, est_baselines)
+                if not succ:
+                    continue
                                
                 success = calibrator.addTargetView(obs_tuple, T_tc_guess)
                 

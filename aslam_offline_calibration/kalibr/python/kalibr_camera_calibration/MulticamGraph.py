@@ -252,6 +252,7 @@ class MulticamCalibrationGraph(object):
                
         if not success:
             sm.logWarn("getTargetPoseGuess: solvePnP failed with solution: {0}".format(T_t_cN))
+            return False, sm.Transformation()
         
         #transform it back to cam0 (T_t_cN --> T_t_c0)
         T_cN_c0 = sm.Transformation()
@@ -260,7 +261,7 @@ class MulticamCalibrationGraph(object):
         
         T_t_c0 = T_t_cN * T_cN_c0
         
-        return T_t_c0
+        return True, T_t_c0
     
     #get all observations between two cameras
     def getAllMutualObsBetweenTwoCams(self, camA_nr, camB_nr):
